@@ -87,7 +87,8 @@ for i=1:length(t)
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
     %Receiver Signal
-    Mix(i) = cos(2*pi*(2*slope*r_t(i)/c*t(i) + 2*fc*v/c*r_t(i)));
+%     Mix(i) = cos(2*pi*(2*slope*R/c*t(i) + 2*fc*v/c*t(i)));
+    Mix(i) = (Tx(i).*Rx(i));
     
 end
 
@@ -113,7 +114,7 @@ P2 = abs(Y);
  % *%TODO* :
 % Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
 % Hence we throw out half of the samples.
-P1 = P2(1:(Nr/2)+1);
+P1 = P2(1:(Nr/2));
 
 
 %plotting the range
