@@ -196,10 +196,10 @@ TCZeros=zeros(2*Gr+1,2*Gd+1);
 % disp(TCZeros);
 
 % mask for the training cell window
-% TCMask=ones(Cr_size,Cd_size);
+TCMask=ones(Cr_size,Cd_size);
 
-% TCMask(Tr+1:Tr+2*Gr+1, Td+1:Td+2*Gd+1)=TCZeros;
-% disp(TCMask);
+TCMask(Tr+1:Tr+2*Gr+1, Td+1:Td+2*Gd+1)=TCZeros;
+disp(TCMask);
 % disp(sum(TCMask));
 % disp(sum(TCMask,'all'));
 % disp(sum(TCMask(:) == 1));
