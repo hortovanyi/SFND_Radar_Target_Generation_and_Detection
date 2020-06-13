@@ -18,7 +18,7 @@ c=3e8;
 % *%TODO* :
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
-R=70;  %initial range of the target
+R=90;  %initial range of the target
 v=10;   %velocity
  
 
@@ -165,35 +165,81 @@ figure,surf(doppler_axis,range_axis,RDM);
 
 % *%TODO* :
 %Select the number of Training Cells in both the dimensions.
+Tr=2;
+Td=3;
 
 % *%TODO* :
 %Select the number of Guard Cells in both dimensions around the Cell under 
 %test (CUT) for accurate estimation
+Gr=2;
+Gd=3;
 
 % *%TODO* :
 % offset the threshold by SNR value in dB
+offset=15;
 
 % *%TODO* :
 %Create a vector to store noise_level for each iteration on training cells
-noise_level = zeros(1,1);
+CFAR = zeros(Nr/2,Nd);
+
+% training cell data
+Cr_size=2*Gr+2*Tr+1;
+Cd_size=2*Gd+2*Td+1;
+
+% number of training cells
+T=Cr_size*Cd_size-(2*Gr+1)*(2*Gd+1);
+
+
+% mask for the guard cells and CUT
+TCZeros=zeros(2*Gr+1,2*Gd+1);
+
+% disp(TCZeros);
+
+% mask for the training cell window
+% TCMask=ones(Cr_size,Cd_size);
+
+% TCMask(Tr+1:Tr+2*Gr+1, Td+1:Td+2*Gd+1)=TCZeros;
+% disp(TCMask);
+% disp(sum(TCMask));
+% disp(sum(TCMask,'all'));
+% disp(sum(TCMask(:) == 1));
 
 
 % *%TODO* :
 %design a loop such that it slides the CUT across range doppler map by
 %giving margins at the edges for Training and Guard Cells.
-%For every iteration sum the signal level within all the training
-%cells. To sum convert the value from logarithmic to linear using db2pow
-%function. Average the summed values for all of the training
-%cells used. After averaging convert it back to logarithimic using pow2db.
-%Further add the offset to it to determine the threshold. Next, compare the
-%signal under CUT with this threshold. If the CUT level > threshold assign
-%it a value of 1, else equate it to 0.
 
 
-   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
-   % CFAR
+% Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+% CFAR
+CFAR=RDM;
+        
+for i = 1+(Gr+Tr):(Nr/2-(Gr+Tr))
+    for j = 1+(Gd+Td):(Nd-(Gd+Td))
+        
+        %For every iteration sum the signal level within all the training
+        %cells. To sum convert the value from logarithmic to linear using db2pow
+        %function. Average the summed values for all of the training
+        %cells used. After averaging convert it back to logarithimic using pow2db
+        CWin=CFAR(i-(Gr+Tr):i+(Gr+Tr), j-(Gd+Td):j+(Gd+Td));       
+        CWin(Tr+1:Tr+2*Gr+1, Td+1:Td+2*Gd+1)=TCZeros;
+               
+        noise_level=pow2db(sum(db2pow(CWin),'all')/T);
 
+        %Further add the offset to it to determine the threshold. 
+        threshold = noise_level + offset;
 
+        %Next, compare the
+        %signal under CUT with this threshold. If the CUT level > threshold assign
+        %it a value of 1, else equate it to 0.
+        CUT=CFAR(i,j);
+        if (CUT>threshold)
+            CFAR(i,j) = 1;
+        else
+            CFAR(i,j) = 0;
+        end
+    end
+end
 
 
 
@@ -202,19 +248,19 @@ noise_level = zeros(1,1);
 %than the Range Doppler Map as the CUT cannot be located at the edges of
 %matrix. Hence,few cells will not be thresholded. To keep the map size same
 % set those values to 0. 
- 
-
-
-
-
-
-
+for i = 1: Nr/2
+    for j = 1: Nd
+        if i <= Gr+Tr || i >= Nr/2 - (Gr+Tr) || j <= Gd+Td || j >= Nd-(Gd+Td)
+            CFAR(i,j) = 0;
+        end
+    end
+end
 
 
 % *%TODO* :
 %display the CFAR output using the Surf function like we did for Range
 %Doppler Response output.
-figure,surf(doppler_axis,range_axis,'replace this with output');
+figure,surf(doppler_axis,range_axis,CFAR);
 colorbar;
 
 
